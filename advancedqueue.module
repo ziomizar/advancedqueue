@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Implements hook_views_api().
+ */
+function advancedqueue_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'advancedqueue') . '/views',
+  );
+}
+
+/**
+ * Implements hook_advancedqueue_entity_info().
+ */
+function advancedqueue_entity_info() {
+  $entity_info['advancedqueue_item'] = array(
+    'label' => t('Advanced queue item'),
+    'controller class' => 'DrupalDefaultEntityController',
+    'base table' => 'advancedqueue',
+    'module' => 'advancedqueue',
+    'entity keys' => array(
+      'id' => 'item_id',
+    ),
+  );
+  return $entity_info;
+}
