@@ -103,7 +103,7 @@ function advancedqueue_schema() {
     'description' => 'Stores tags of items in queues.',
     'fields' => array(
       'item_id' => array(
-        'type' => 'serial',
+        'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'description' => 'A {advancedqueue}.item_id',
