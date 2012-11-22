@@ -2,6 +2,8 @@
 
 /**
  * Validate that a AdvancedQueue works as a normal queue.
+ *
+ * Note this class extends core's QueueTestCase, so we use its tests.
  */
 class AdvancedQueueTestCase extends QueueTestCase {
   public static function getInfo() {

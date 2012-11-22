@@ -1,7 +1,12 @@
 <?php
 
 /**
- * Implementation of hook_enable().
+ * @file
+ * Install, update, and uninstall functions for the Advanced-queue module.
+ */
+
+/**
+ * Implements hook_enable().
  */
 function advancedqueue_enable() {
   if (variable_get('queue_default_class', NULL) === NULL) {
@@ -11,7 +16,7 @@ function advancedqueue_enable() {
 }
 
 /**
- * Implementation of hook_disable().
+ * Implements hook_disable().
  */
 function advancedqueue_disable() {
   if (variable_get('queue_default_class', NULL) === 'AdvancedQueue') {
@@ -21,7 +26,7 @@ function advancedqueue_disable() {
 }
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function advancedqueue_schema() {
   $schema['advancedqueue'] = array(
@@ -65,7 +70,7 @@ function advancedqueue_schema() {
         'not null' => FALSE,
         'size' => 'big',
         'serialize' => TRUE,
-        'description' => 'The arbitrary result for the item, only significant if {redisqueue}.status <> 0',
+        'description' => 'The arbitrary result for the item, only significant if {advancedqueue}.status <> 0',
       ),
       'expire' => array(
         'type' => 'int',
@@ -76,7 +81,7 @@ function advancedqueue_schema() {
       'status' => array(
         'type' => 'int',
         'not null' => TRUE,
-        'default' => -1,
+        'default' => ADVANCEDQUEUE_STATUS_QUEUED,
         'size' => 'tiny',
         'description' => 'Indicates whether the item has been processed (-1 = queue, 0 = processing, 1 = successfully processed, 2 = failed).',
       ),

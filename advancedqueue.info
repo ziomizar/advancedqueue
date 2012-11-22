@@ -3,12 +3,12 @@ description = Helper module for advanced queuing.
 package = Other
 core = 7.x
 
-files[] = advancedqueue.module
-files[] = advancedqueue.install
 files[] = advancedqueue.queue.inc
 
-files[] = tests/advancedqueue.test
-
+; Views
 files[] = views/advancedqueue_handler_field_title.inc
 files[] = views/advancedqueue_handler_field_status.inc
 files[] = views/advancedqueue_handler_filter_status.inc
+
+; Test
+files[] = tests/advancedqueue.test

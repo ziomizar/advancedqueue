@@ -26,6 +26,6 @@ class advancedqueue_handler_field_title extends views_handler_field {
       '@item_uid' => $values->{$this->aliases['uid']},
     );
 
-    return t($values->{$this->field_alias}, $placeholders);
+    return format_string($values->{$this->field_alias}, $placeholders);
   }
 }

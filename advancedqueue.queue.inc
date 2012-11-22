@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * Defintion of AdvancedQueue.
+ */
+
+/**
  * Extended queue.
  */
 class AdvancedQueue implements DrupalReliableQueueInterface {
@@ -25,7 +29,7 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
         // We cannot rely on REQUEST_TIME because many items might be created
         // by a single request which takes longer than 1 second.
         'created' => time(),
-        'status' => -1,
+        'status' => ADVANCEDQUEUE_STATUS_QUEUED,
       ));
     return (bool) $query->execute();
   }
@@ -50,7 +54,7 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
         // should really expire.
         $update = db_update('advancedqueue')
           ->fields(array(
-            'status' => 0,
+            'status' => ADVANCEDQUEUE_STATUS_PROCESSING,
             'expire' => time() + $lease_time,
           ))
           ->condition('item_id', $item->item_id)
@@ -72,7 +76,7 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
     $update = db_update('advancedqueue')
       ->fields(array(
         'expire' => 0,
-        'status' => -1,
+        'status' => ADVANCEDQUEUE_STATUS_QUEUED,
       ))
       ->condition('item_id', $item->item_id);
     return $update->execute();
@@ -82,7 +86,7 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
     db_update('advancedqueue')
       ->fields(array(
         'expire' => 0,
-        'status' => isset($item->status) ? $item->status : 1,
+        'status' => isset($item->status) ? $item->status : ADVANCEDQUEUE_STATUS_SUCCESS,
         'result' => serialize(isset($item->result) ? $item->result : array()),
         'processed' => time(),
       ))

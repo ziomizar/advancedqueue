@@ -1,0 +1,6 @@
+name = Advanced Queues example
+description = Example module for Advanced Queues module.
+package = Other
+core = 7.x
+
+dependencies[] = advancedqueue
