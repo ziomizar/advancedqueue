@@ -63,6 +63,8 @@ function drush_advancedqueue_process_queue($queue = NULL) {
       // Add default values.
       $queue_info += array(
         'delete when completed' => TRUE,
+        'retry after' => FALSE,
+        'max attempts' => 10,
       );
 
       $queue = DrupalQueue::get($queue_name);
@@ -118,15 +120,31 @@ function drush_advancedqueue_process_item($queue, $queue_name, $queue_info, $ite
   catch (Exception $e) {
     $item->status = ADVANCEDQUEUE_STATUS_FAILURE;
     $params['!message'] = (string) $e;
-    drush_log(dt('[!queue:!id] failed processing: !message', $params));
+    drush_log(dt('[@queue:@id] failed processing: !message', $params));
   }
 
   $params['@status'] = $item->status;
   drush_log(dt('[@queue:@id] Processing ended with result @status.', $params));
 
-  if ($queue_info['delete when completed']) {
-    // Item was processed, so we can "delete" it. This is not removing the
-    // item from the database, but rather updates it with the status.
-    $queue->deleteItem($item);
+  // Requeue in case of failure.
+  if (!empty($queue_info['retry after']) && $item->status == ADVANCEDQUEUE_STATUS_FAILURE) {
+    // Store the number of attempt.
+    $item->data['advancedqueue_attempt'] = isset($item->data['advancedqueue_attempt']) ? $item->data['advancedqueue_attempt'] + 1 : 1;
+    $item->created = time() + $queue_info['retry after'];
+
+    if ($queue_info['max attempts'] <= $item->data['advancedqueue_attempt']) {
+      $queue->requeueItem($item);
+      drush_log(dt('[@queue:@id] failed processing and has been requeued.', $params));
+    }
+    else {
+      drush_log(dt('[@queue:@id] The maximum number of attempts has been reached, aborting.', $params));
+    }
+  }
+  else {
+    if ($queue_info['delete when completed']) {
+      // Item was processed, so we can "delete" it. This is not removing the
+      // item from the database, but rather updates it with the status.
+      $queue->deleteItem($item);
+    }
   }
 }
