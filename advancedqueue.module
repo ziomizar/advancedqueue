@@ -36,6 +36,7 @@ function advancedqueue_entity_info() {
     'module' => 'advancedqueue',
     'entity keys' => array(
       'id' => 'item_id',
+      'label' => 'title',
     ),
   );
   return $entity_info;
