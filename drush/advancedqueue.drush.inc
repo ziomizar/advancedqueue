@@ -38,9 +38,9 @@ function advancedqueue_drush_command() {
  */
 function drush_advancedqueue_process_queue($queue = NULL) {
   // Load information about the registred queues, and sort them by weight.
-  $all_queue_info = module_invoke_all('advanced_queue_info');
-  drupal_alter('advanced_queue_info', $all_queue_info);
-  uasort($all_queue_info, 'drupal_sort_weight');
+  if (!$queues_info = advancedqueue_get_queues_info()) {
+    return drush_set_error(dt('No queues exist.'));
+  }
 
   $all_option = drush_get_option('all');
   if (!$all_option && empty($queue)) {
@@ -48,20 +48,15 @@ function drush_advancedqueue_process_queue($queue = NULL) {
   }
 
   if ($all_option) {
-    $queues = $all_queue_info;
+    $queues = $queues_info;
   }
   else {
     // Validate queues.
     $queues = drupal_map_assoc(explode(',', $queue));
-    $invalid_queues = array_diff_key($queues, $all_queue_info);
-    if ($invalid_queues) {
+    if ($invalid_queues = array_diff_key($queues, $queues_info)) {
       return drush_set_error(dt('The following queues are invalid: !queues. Aborting.', array('!queues' => implode(', ', $invalid_queues))));
     }
-    $queues = array_intersect_key($all_queue_info, $queues);
-  }
-
-  if (!$queues) {
-    return drush_set_error(dt('No queues exist.'));
+    $queues = array_intersect_key($queues_info, $queues);
   }
 
   // Run the worker for a certain period of time before killing it.
@@ -82,7 +77,7 @@ function drush_advancedqueue_process_queue($queue = NULL) {
       $queue = DrupalQueue::get($queue_name);
 
       if ($item = $queue->claimItem()) {
-        drush_advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end);
+        advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end);
         continue 2;
       }
     }
@@ -92,73 +87,6 @@ function drush_advancedqueue_process_queue($queue = NULL) {
   }
 
   drush_log(dt('Timeout: exiting processing loop.'));
-}
-
-/**
- * Process a queue item.
- *
- * @param $queue
- *   The queue object.
- * @param $queue_name
- *   The queue name.
- * @param $queue_info
- *   The queue info.
- * @param $item
- *   The item to process.
- * @param $end_time
- *   (Optional) The time the process should end.
- */
-function drush_advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end_time = FALSE) {
-  $function = $queue_info['worker callback'];
-  $params =  array(
-    '@queue' => $queue_name,
-    '@id' => $item->item_id,
-    '@title' => !empty($item->title) ? $item->title : dt('untitled'),
-  );
-  drush_log(dt('[@queue:@id] Starting processing item @title.', $params));
-
-  try {
-    // Pass the claimed item itself and end date along to the worker
-    // callback.
-    $output = $function($item, $end_time);
-    if (is_array($output)) {
-      $item->status = $output['status'];
-      $item->result = $output['result'];
-    }
-    else {
-      $item->status = $output ? ADVANCEDQUEUE_STATUS_SUCCESS : ADVANCEDQUEUE_STATUS_FAILURE;
-    }
-  }
-  catch (Exception $e) {
-    $item->status = ADVANCEDQUEUE_STATUS_FAILURE;
-    $params['!message'] = (string) $e;
-    drush_log(dt('[@queue:@id] failed processing: !message', $params));
-  }
-
-  $params['@status'] = $item->status;
-  drush_log(dt('[@queue:@id] Processing ended with result @status.', $params));
-
-  // Requeue in case of failure.
-  if (!empty($queue_info['retry after']) && $item->status == ADVANCEDQUEUE_STATUS_FAILURE) {
-    // Store the number of attempt.
-    $item->data['advancedqueue_attempt'] = isset($item->data['advancedqueue_attempt']) ? $item->data['advancedqueue_attempt'] + 1 : 1;
-    $item->created = time() + $queue_info['retry after'];
-
-    if ($item->data['advancedqueue_attempt'] <= $queue_info['max attempts']) {
-      $queue->requeueItem($item);
-      drush_log(dt('[@queue:@id] failed processing and has been requeued.', $params));
-      return;
-    }
-    else {
-      drush_log(dt('[@queue:@id] The maximum number of attempts has been reached, aborting.', $params));
-    }
-  }
-
-  if ($queue_info['delete when completed']) {
-    // Item was processed, so we can "delete" it. This is not removing the
-    // item from the database, but rather updates it with the status.
-    $queue->deleteItem($item);
-  }
 }
 
 /**

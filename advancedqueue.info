@@ -9,6 +9,3 @@ files[] = advancedqueue.queue.inc
 files[] = views/advancedqueue_handler_field_title.inc
 files[] = views/advancedqueue_handler_field_status.inc
 files[] = views/advancedqueue_handler_filter_status.inc
-
-; Test
-files[] = tests/advancedqueue.test
