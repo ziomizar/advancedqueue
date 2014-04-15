@@ -21,9 +21,21 @@ function advancedqueue_drush_command() {
     ),
     'aliases' => array('advancedqueue'),
   );
+  $items['advancedqueue-list'] = array(
+    'description' => 'Returns a list of all defined queues',
+    'options' => array(
+      'pipe' => 'Return a comma delimited list of queues.'
+    )
+  );
   return $items;
 }
 
+/**
+ * Command callback for drush advancedqueue-process-queue.
+ *
+ * @param $queue_name
+ *   Arbitrary string. The name of the queue to work with.
+ */
 function drush_advancedqueue_process_queue($queue = NULL) {
   // Load information about the registred queues, and sort them by weight.
   $all_queue_info = module_invoke_all('advanced_queue_info');
@@ -147,4 +159,57 @@ function drush_advancedqueue_process_item($queue, $queue_name, $queue_info, $ite
     // item from the database, but rather updates it with the status.
     $queue->deleteItem($item);
   }
+}
+
+/**
+ * Command callback for drush advancedqueue-list.
+ */
+function drush_advancedqueue_list() {
+  $queues = drush_advancedqueue_get_queues();
+  $rows = array(array('Queue', 'Items', 'Class'));
+  foreach (array_keys($queues) as $name) {
+    $q = DrupalQueue::get($name);
+    $rows[] = array($name, $q->numberOfItems(), get_class($q));
+  }
+
+  if (drush_get_option('pipe')) {
+    $pipe = array();
+    array_shift($rows);
+    foreach ($rows as $r) {
+      $pipe[] = implode(",", $r);
+    }
+    drush_print_pipe($pipe);
+  }
+  else {
+    drush_print_table($rows, TRUE);
+  }
+
+  // Return the result for backend invoke
+  return $rows;
+}
+
+/**
+ * Get queues defined with hook_advanced_queue_info().
+ *
+ * @return
+ *   Array of queues indexed by name and containing queue object and number
+ *   of items.
+ */
+function drush_advancedqueue_get_queues() {
+  $queues = &drupal_static(__FUNCTION__);
+  if (!isset($queues)) {
+    $advanced_queues = module_invoke_all('advanced_queue_info');
+    drupal_alter('advanced_queue_info', $advanced_queues);
+
+    $queues = array();
+    foreach($advanced_queues as $name => $queue) {
+      $queues[$name] = array(
+        'cron' => array(
+          'callback' => $queue['worker callback'],
+          'time' => $queue['time'],
+        )
+      );
+    }
+  }
+  return $queues;
 }
