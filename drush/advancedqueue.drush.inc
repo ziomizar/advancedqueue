@@ -132,19 +132,19 @@ function drush_advancedqueue_process_item($queue, $queue_name, $queue_info, $ite
     $item->data['advancedqueue_attempt'] = isset($item->data['advancedqueue_attempt']) ? $item->data['advancedqueue_attempt'] + 1 : 1;
     $item->created = time() + $queue_info['retry after'];
 
-    if ($queue_info['max attempts'] <= $item->data['advancedqueue_attempt']) {
+    if ($item->data['advancedqueue_attempt'] <= $queue_info['max attempts']) {
       $queue->requeueItem($item);
       drush_log(dt('[@queue:@id] failed processing and has been requeued.', $params));
+      return;
     }
     else {
       drush_log(dt('[@queue:@id] The maximum number of attempts has been reached, aborting.', $params));
     }
   }
-  else {
-    if ($queue_info['delete when completed']) {
-      // Item was processed, so we can "delete" it. This is not removing the
-      // item from the database, but rather updates it with the status.
-      $queue->deleteItem($item);
-    }
+
+  if ($queue_info['delete when completed']) {
+    // Item was processed, so we can "delete" it. This is not removing the
+    // item from the database, but rather updates it with the status.
+    $queue->deleteItem($item);
   }
 }
