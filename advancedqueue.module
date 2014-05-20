@@ -26,6 +26,11 @@ define('ADVANCEDQUEUE_STATUS_SUCCESS', 1);
 define('ADVANCEDQUEUE_STATUS_FAILURE', 2);
 
 /**
+ * Status indicating item processing failed, and should be retried.
+ */
+define('ADVANCEDQUEUE_STATUS_FAILURE_RETRY', 3);
+
+/**
  * Implements hook_advancedqueue_entity_info().
  */
 function advancedqueue_entity_info() {
@@ -158,17 +163,19 @@ function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $en
   advancedqueue_log_message(format_string('[@queue:@id] Processing ended with result @status.', $params));
 
   // Requeue in case of failure.
-  if (!empty($queue_info['retry after']) && $item->status == ADVANCEDQUEUE_STATUS_FAILURE) {
-    // Store the number of attempt.
+  if ($item->status == ADVANCEDQUEUE_STATUS_FAILURE_RETRY && !empty($queue_info['retry after'])) {
     $item->data['advancedqueue_attempt'] = isset($item->data['advancedqueue_attempt']) ? $item->data['advancedqueue_attempt'] + 1 : 1;
     $item->created = time() + $queue_info['retry after'];
 
-    if ($item->data['advancedqueue_attempt'] <= $queue_info['max attempts']) {
+    // "max attempts" is optional, skip the attempts check if it's missing.
+    $max_attempts = isset($queue_info['max attempts']) ? $queue_info['max attempts'] : 0;
+    if (!$max_attempts || $item->data['advancedqueue_attempt'] <= $max_attempts) {
       $queue->requeueItem($item);
       advancedqueue_log_message(format_string('[@queue:@id] failed processing and has been requeued.', $params));
       return;
     }
     else {
+      $item->status = ADVANCEDQUEUE_STATUS_FAILURE;
       advancedqueue_log_message(format_string('[@queue:@id] The maximum number of attempts has been reached, aborting.', $params));
     }
   }
