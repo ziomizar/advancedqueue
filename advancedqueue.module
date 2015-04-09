@@ -105,6 +105,8 @@ function advancedqueue_get_queues_info($queue_names = array()) {
     foreach ($queues_info as &$queue_info) {
       $queue_info += array(
         'delete when completed' => TRUE,
+        'retry after' => FALSE,
+        'max attempts' => 10,
       );
     }
     drupal_alter('advanced_queue_info', $queues_info);

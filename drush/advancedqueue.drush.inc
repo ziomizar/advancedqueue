@@ -67,13 +67,6 @@ function drush_advancedqueue_process_queue($queue = NULL) {
 
   while (!$end || time() < $end) {
     foreach ($queues as $queue_name => $queue_info) {
-      // Add default values.
-      $queue_info += array(
-        'delete when completed' => TRUE,
-        'retry after' => FALSE,
-        'max attempts' => 10,
-      );
-
       $queue = DrupalQueue::get($queue_name);
 
       if ($item = $queue->claimItem()) {
