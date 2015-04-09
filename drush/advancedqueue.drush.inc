@@ -37,7 +37,7 @@ function advancedqueue_drush_command() {
  *   Arbitrary string. The name of the queue to work with.
  */
 function drush_advancedqueue_process_queue($queue = NULL) {
-  // Load information about the registred queues, and sort them by weight.
+  // Load information about the registered queues, and sort them by weight.
   if (!$queues_info = advancedqueue_get_queues_info()) {
     return drush_set_error(dt('No queues exist.'));
   }

@@ -16,7 +16,7 @@ define('ADVANCEDQUEUE_STATUS_QUEUED', -1);
 define('ADVANCEDQUEUE_STATUS_PROCESSING', 0);
 
 /**
- * Status indicating item was processed successfuly.
+ * Status indicating item was processed successfully.
  */
 define('ADVANCEDQUEUE_STATUS_SUCCESS', 1);
 
