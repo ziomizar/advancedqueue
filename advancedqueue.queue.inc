@@ -20,17 +20,46 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
   }
 
   public function createItem($data) {
-    $query = db_insert('advancedqueue')
-      ->fields(array(
-        'name' => $this->name,
-        'uid' => is_array($data) && isset($data['uid']) ? $data['uid'] : $GLOBALS['user']->uid,
-        'title' => is_array($data) && isset($data['title']) ? $data['title'] : t('Unnamed item'),
-        'data' => serialize($data),
-        // We cannot rely on REQUEST_TIME because many items might be created
-        // by a single request which takes longer than 1 second.
-        'created' => time(),
-        'status' => ADVANCEDQUEUE_STATUS_QUEUED,
-      ));
+    return $this->createUniqueItem($data);
+  }
+
+  /**
+   * Allows the creation of uniquely-keyed items within a single queue.
+   *
+   * @param array $data
+   *   The data for the queue item.
+   * @param mixed $key
+   *   If present, the unique key for the queue item.
+   * @param bool $overwrite
+   *   Whether the new item should replace the old item in the queue. Defaults
+   *   to TRUE. Used for queue-but-don't-replace-existing logic.
+   */
+  public function createUniqueItem($data, $key = NULL) {
+    $fields = array(
+      'name' => $this->name,
+      'uid' => is_array($data) && isset($data['uid']) ? $data['uid'] : $GLOBALS['user']->uid,
+      'title' => is_array($data) && isset($data['title']) ? $data['title'] : t('Unnamed item'),
+      'data' => serialize($data),
+      // We cannot rely on REQUEST_TIME because many items might be created
+      // by a single request which takes longer than 1 second.
+      'created' => time(),
+      'status' => ADVANCEDQUEUE_STATUS_QUEUED,
+    );
+    if ($key) {
+      // Merge onto the existing item. This updates *all* properties, meaning
+      // that if "created" is set into the future and an item is updated too
+      // frequently, it might never get to run. Be careful!
+      $fields['item_key'] = $key;
+      $query = db_merge('advancedqueue')
+        ->key(array('item_key' => $key))
+        ->fields($fields);
+    }
+    else {
+      // No key means just insert a new item!
+      $query = db_insert('advancedqueue')
+        ->fields($fields);
+    }
+
     return (bool) $query->execute();
   }
 
@@ -48,7 +77,7 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
         ':created' => time(),
         ':name' => $this->name,
       );
-      $item = db_query_range('SELECT item_id, uid, title, data FROM {advancedqueue} q WHERE status = -1 AND expire = 0 AND name = :name AND created <= :created ORDER BY created ASC', 0, 1, $data)->fetchObject();
+      $item = db_query_range('SELECT item_id, item_key, created, uid, title, data FROM {advancedqueue} q WHERE status = -1 AND expire = 0 AND name = :name AND created <= :created ORDER BY created ASC', 0, 1, $data)->fetchObject();
       if ($item) {
         // Try to update the item. Only one thread can succeed in UPDATEing the
         // same row. We cannot rely on REQUEST_TIME because items might be
