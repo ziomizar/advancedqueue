@@ -41,8 +41,10 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
       'title' => is_array($data) && isset($data['title']) ? $data['title'] : t('Unnamed item'),
       'data' => serialize($data),
       // We cannot rely on REQUEST_TIME because many items might be created
-      // by a single request which takes longer than 1 second.
-      'created' => time(),
+      // by a single request which takes longer than 1 second. However we allow
+      // the creator to post-date their queue items as with the UID and title
+      // properties.
+      'created' => !empty($data['created']) ? $data['created'] : time(),
       'status' => ADVANCEDQUEUE_STATUS_QUEUED,
     );
     if ($key) {
