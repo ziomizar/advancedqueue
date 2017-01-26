@@ -136,6 +136,11 @@ function advancedqueue_get_queues_info($queue_names = array()) {
  */
 function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end_time = FALSE) {
   $function = $queue_info['worker callback'];
+  if (!empty($queue_info['worker include'])) {
+    // This parameter, if set, is the 3 args to module_load_include, in order.
+    // This allows worker callbacks to live outside the .module file.
+    call_user_func_array('module_load_include', $queue_info['worker include']);
+  }
   $params =  array(
     '@queue' => $queue_name,
     '@id' => $item->item_id,
