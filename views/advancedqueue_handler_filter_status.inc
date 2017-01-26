@@ -9,10 +9,11 @@ class advancedqueue_handler_filter_status extends views_handler_filter_in_operat
       $this->value_title = t('Status');
 
       $this->value_options = array(
-        -1 => t('Queued'),
-        0 => t('Processing'),
-        1 => t('Processed'),
-        2 => t('Failed'),
+        ADVANCEDQUEUE_STATUS_QUEUED => t('Queued'),
+        ADVANCEDQUEUE_STATUS_PROCESSING => t('Processing'),
+        ADVANCEDQUEUE_STATUS_SUCCESS => t('Processed'),
+        ADVANCEDQUEUE_STATUS_FAILURE => t('Failed'),
+        ADVANCEDQUEUE_STATUS_FAILURE_RETRY => t('Retry'),
       );
     }
   }
