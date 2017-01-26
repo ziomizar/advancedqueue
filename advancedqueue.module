@@ -148,6 +148,11 @@ function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $en
   );
   advancedqueue_log_message(format_string('[@queue:@id] Starting processing item @title.', $params));
 
+  // Clear Drupal's static caches (including entity controllers) before
+  // processing, so that each queue item can have a relatively fresh
+  // start.
+  drupal_static_reset();
+
   try {
     // Pass the claimed item itself and end date along to the worker
     // callback.
