@@ -64,7 +64,7 @@ function drush_advancedqueue_process_queue($queue = NULL) {
   _advancedqueue_cleanup_table();
 
   // Run the worker for a certain period of time before killing it.
-  $timeout = drush_get_option('timeout');
+  $timeout = drush_get_option('timeout') ?: variable_get('advancedqueue_processing_timeout_drush', 0);
   $end = $timeout ? time() + $timeout : 0;
 
   drush_log(dt('Starting processing loop.'));

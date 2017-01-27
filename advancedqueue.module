@@ -81,8 +81,7 @@ function advancedqueue_cron() {
     return;
   }
 
-  // @todo: Add variable to set interval?
-  $end = time() + 60;
+  $end = time() + variable_get('advancedqueue_processing_timeout_cron', 60);
   foreach ($queues as $queue_name => $queue_info) {
     $queue = DrupalQueue::get($queue_name);
 
@@ -233,6 +232,20 @@ function advancedqueue_log_message($message) {
   }
   else {
     watchdog('advancedqueue', $message);
+  }
+}
+
+/**
+ * Form element validation handler for integer elements that must be positive.
+ *
+ * Similar to element_validate_integer_positive(), but allows for 0 values.
+ *
+ * @see advancedqueue_settings_form()
+ */
+function advancedqueue_element_validate_integer_positive($element, &$form_state) {
+  $value = $element['#value'];
+  if ($value !== '' && (!is_numeric($value) || intval($value) != $value || $value < 0)) {
+    form_error($element, t('%name must be a positive integer.', array('%name' => $element['#title'])));
   }
 }
 
