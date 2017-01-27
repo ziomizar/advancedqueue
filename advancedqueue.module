@@ -65,11 +65,11 @@ function advancedqueue_cron() {
     $queue = DrupalQueue::get($queue_name);
 
     while ($item = $queue->claimItem()) {
+      advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end);
       if (time() > $end) {
         // We've reached max execution time.
         return;
       }
-      advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end);
     }
   }
 }
