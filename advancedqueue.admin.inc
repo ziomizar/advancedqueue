@@ -24,5 +24,13 @@ function advancedqueue_settings_form($form, &$form_state) {
     '#options' => array(0 => t('Never')) + drupal_map_assoc(array(3600, 10800, 21600, 43200, 86400, 604800), 'format_interval'),
   );
 
+  $form['advancedqueue_use_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Process Advanced Queue via Cron'),
+    '#multiple' => TRUE,
+    '#description' => t('Enable to allow queue items to to be processed using Cron. This is a "poor man\'s" option that allows processing the queue, as the better solution would be to execute the Drush command via the command line.'),
+    '#default_value' => variable_get('advancedqueue_use_cron', FALSE),
+  );
+
   return system_settings_form($form);
 }
