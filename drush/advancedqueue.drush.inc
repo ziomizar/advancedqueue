@@ -59,6 +59,10 @@ function drush_advancedqueue_process_queue($queue = NULL) {
     $queues = array_intersect_key($queues_info, $queues);
   }
 
+  // Delete older entries and make sure there are no stale items in the table.
+  drush_log(dt('Cleanup processed and stale items.'));
+  _advancedqueue_cleanup_table();
+
   // Run the worker for a certain period of time before killing it.
   $timeout = drush_get_option('timeout');
   $end = $timeout ? time() + $timeout : 0;

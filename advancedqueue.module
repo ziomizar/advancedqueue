@@ -48,9 +48,31 @@ function advancedqueue_entity_info() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function advancedqueue_menu() {
+  $items = array();
+
+  $items['admin/config/system/advancedqueue'] = array(
+    'title' => 'Advanced Queue',
+    'description' => 'Configure settings for the Advanced Queue module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('advancedqueue_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'advancedqueue.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_cron().
  */
 function advancedqueue_cron() {
+  // Delete older entries and make sure there are no stale items in the table.
+  _advancedqueue_cleanup_table();
+
   if (!variable_get('advancedqueue_use_cron', FALSE)) {
     return;
   }
@@ -222,4 +244,81 @@ function advancedqueue_views_api() {
     'api' => 2,
     'path' => drupal_get_path('module', 'advancedqueue') . '/views',
   );
+}
+
+/**
+ * Helper function to clean the advancedqueue table.
+ */
+function _advancedqueue_cleanup_table() {
+  // Purge processed items beyond a chosen threshold.
+  $preserve_rows = variable_get('advancedqueue_threshold', 0);
+  if ($preserve_rows) {
+    // No limit means we don't remove old entries.
+    _advancedqueue_purge_history($preserve_rows);
+  }
+
+  // Clean up timed out items stuck in ADVANCEDQUEUE_STATUS_PROCESSING.
+  $timeout = variable_get('advancedqueue_release_timeout', 0);
+  if ($timeout) {
+    // No timeout means we don't touch stale items.
+    _advancedqueue_release_stale_items($timeout);
+  }
+}
+
+/**
+ * Helper function to remove data we don't need anymore.
+ *
+ * Removes old entries of processed items.
+ */
+function _advancedqueue_purge_history($preserve_rows) {
+  // Item status we want to clean.
+  $statuses = array(
+    ADVANCEDQUEUE_STATUS_SUCCESS,
+    ADVANCEDQUEUE_STATUS_FAILURE,
+  );
+
+  // Find the timestamp of the Xth row.
+  $delete_before = db_select('advancedqueue', 'a')
+    ->fields('a', array('created'))
+    ->condition('status', $statuses, 'IN')
+    ->orderBy('created', 'DESC')
+    ->range($preserve_rows - 1, 1)
+    ->execute()
+    ->fetchField();
+
+  // Remove all items created before the selected timestamp.
+  if ($min_row) {
+    db_delete('advancedqueue')
+      ->condition('created', $delete_before, '<')
+      ->condition('status', $statuses, 'IN')
+      ->execute();
+  }
+}
+
+/**
+ * Helper function to release stale items.
+ *
+ * Requeues long expired entries that are in processing state.
+ * Items can be stuck in the ADVANCEDQUEUE_STATUS_PROCESSING state
+ * if the PHP process crashes or is killed while processing an item.
+ */
+function _advancedqueue_release_stale_items($timeout) {
+  $before = REQUEST_TIME - $timeout;
+
+  $items = db_select('advancedqueue', 'a')
+    ->fields('a', array('item_id', 'name'))
+    ->condition('status', ADVANCEDQUEUE_STATUS_PROCESSING)
+    ->condition('expire', $before, '<=')
+    ->orderBy('name')
+    ->execute();
+
+  $queues = array();
+
+  // Releasing stale items to put them back in queued status.
+  foreach ($items as $item) {
+    // DrupalQueue::get() statically caches queues objects,
+    // we wouldn't improve performance by grouping items by queue.
+    $queue = DrupalQueue::get($item->name);
+    $queue->releaseItem($item);
+  }
 }

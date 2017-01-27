@@ -2,6 +2,7 @@ name = Advanced Queues
 description = Helper module for advanced queuing.
 package = Other
 core = 7.x
+configure = admin/config/system/advancedqueue
 
 files[] = advancedqueue.queue.inc
 
