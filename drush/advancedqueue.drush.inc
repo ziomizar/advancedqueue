@@ -13,7 +13,7 @@ function advancedqueue_drush_command() {
   $items['advancedqueue-process-queue'] = array(
     'description' => 'Run a processing job for a queue.',
     'arguments' => array(
-      'queue' => dt('The name of the queue to process.'),
+      'queues' => dt('The name(s) of the queue(s) to process, either a single name or a comma-separated list.'),
     ),
     'options' => array(
       'timeout' => 'The maximum execution time of the script. Be warned that this is a rough estimate as the time is only checked between two items.',
@@ -36,14 +36,14 @@ function advancedqueue_drush_command() {
  * @param $queue_name
  *   Arbitrary string. The name of the queue to work with.
  */
-function drush_advancedqueue_process_queue($queue = NULL) {
+function drush_advancedqueue_process_queue($queue_args = NULL) {
   // Load information about the registered queues, and sort them by weight.
   if (!$queues_info = advancedqueue_get_queues_info()) {
     return drush_set_error(dt('No queues exist.'));
   }
 
   $all_option = drush_get_option('all');
-  if (!$all_option && empty($queue)) {
+  if (!$all_option && empty($queue_args)) {
     return drush_set_error(dt('You have to specify either a set of queues or the --all parameter.'));
   }
 
@@ -52,7 +52,7 @@ function drush_advancedqueue_process_queue($queue = NULL) {
   }
   else {
     // Validate queues.
-    $queues = drupal_map_assoc(explode(',', $queue));
+    $queues = drupal_map_assoc(explode(',', $queue_args));
     if ($invalid_queues = array_diff_key($queues, $queues_info)) {
       return drush_set_error(dt('The following queues are invalid: !queues. Aborting.', array('!queues' => implode(', ', $invalid_queues))));
     }
