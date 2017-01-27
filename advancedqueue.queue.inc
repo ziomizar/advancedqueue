@@ -35,10 +35,15 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
    *   to TRUE. Used for queue-but-don't-replace-existing logic.
    */
   public function createUniqueItem($data, $key = NULL) {
+    // Make sure that queue items cannot break the title column.
+    $schema = drupal_get_schema('advancedqueue');
+    $title_max = $schema['fields']['title']['length'];
+    $title_raw = is_array($data) && isset($data['title']) ? $data['title'] : t('Unnamed item');
+
     $fields = array(
       'name' => $this->name,
       'uid' => is_array($data) && isset($data['uid']) ? $data['uid'] : $GLOBALS['user']->uid,
-      'title' => is_array($data) && isset($data['title']) ? $data['title'] : t('Unnamed item'),
+      'title' => truncate_utf8($title_raw, $title_max, FALSE, TRUE),
       'data' => serialize($data),
       // We cannot rely on REQUEST_TIME because many items might be created
       // by a single request which takes longer than 1 second. However we allow
