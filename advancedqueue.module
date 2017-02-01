@@ -189,7 +189,7 @@ function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $en
   catch (Exception $e) {
     $item->status = ADVANCEDQUEUE_STATUS_FAILURE;
     $params['!message'] = (string) $e;
-    advancedqueue_log_message(format_string('[@queue:@id] failed processing: !message', $params));
+    advancedqueue_log_message(format_string('[@queue:@id] failed processing: !message', $params), WATCHDOG_ERROR);
   }
 
   $params['@status'] = $item->status;
@@ -204,12 +204,12 @@ function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $en
     $max_attempts = isset($queue_info['max attempts']) ? $queue_info['max attempts'] : 0;
     if (!$max_attempts || $item->data['advancedqueue_attempt'] <= $max_attempts) {
       $queue->requeueItem($item);
-      advancedqueue_log_message(format_string('[@queue:@id] failed processing and has been requeued.', $params));
+      advancedqueue_log_message(format_string('[@queue:@id] failed processing and has been requeued.', $params), WATCHDOG_WARNING);
       return;
     }
     else {
       $item->status = ADVANCEDQUEUE_STATUS_FAILURE;
-      advancedqueue_log_message(format_string('[@queue:@id] The maximum number of attempts has been reached, aborting.', $params));
+      advancedqueue_log_message(format_string('[@queue:@id] The maximum number of attempts has been reached, aborting.', $params), WATCHDOG_ERROR);
     }
   }
 
@@ -221,18 +221,19 @@ function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $en
 }
 
 /**
- * Helper function to log message. In CLI we use Drush Log, otherwise watchdog.
+ * Helper function to log a message.
  *
- * @param $message
+ * @param string $message
  *   The message to log.
+ * @param int $severity
+ *   The severity as one of the WATCHDOG_* constants.
+ *
+ * @see watchdog()
  */
-function advancedqueue_log_message($message) {
-  if (drupal_is_cli()) {
-    drush_log($message);
-  }
-  else {
-    watchdog('advancedqueue', $message);
-  }
+function advancedqueue_log_message($message, $severity = WATCHDOG_DEBUG) {
+  // The $variables argument to watchdog() is ignored in this case; the default
+  // messages are easier to search if they are saved as plain strings.
+  watchdog('advancedqueue', $message, array(), $severity);
 }
 
 /**
