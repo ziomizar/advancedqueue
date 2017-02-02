@@ -109,7 +109,7 @@ function advancedqueue_cron() {
   foreach ($queues as $queue_name => $queue_info) {
     $queue = DrupalQueue::get($queue_name);
 
-    while ($item = $queue->claimItem()) {
+    while ($item = $queue->claimItem($queue_info['lease time'])) {
       advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end);
       if (time() > $end) {
         // We've reached max execution time.
@@ -152,6 +152,7 @@ function advancedqueue_get_queues_info($queue_names = array()) {
         'delete when completed' => TRUE,
         'retry after' => FALSE,
         'max attempts' => 10,
+        'lease time' => 30,
       );
     }
     drupal_alter('advanced_queue_info', $queues_info);

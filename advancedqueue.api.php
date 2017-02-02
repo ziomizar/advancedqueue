@@ -29,8 +29,11 @@ function hook_advanced_queue_info() {
     'retry after' => 10,
     // The maximum number of attempts after a failure.
     'max attempts' => 5,
+    // The time an item is leased for before it expires and is requeued.
+    // Defaults to 30.
+    'lease time' => 30,
     // Queues are weighted and all items in a lighter queue are processed
-    // before queues with heavier weights.
+    // before queues with heavier weights. Defaults to 0.
     'weight' => 10,
   );
   return $queue_info;

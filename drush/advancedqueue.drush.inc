@@ -73,7 +73,7 @@ function drush_advancedqueue_process_queue($queue_args = NULL) {
     foreach ($queues as $queue_name => $queue_info) {
       $queue = DrupalQueue::get($queue_name);
 
-      if ($item = $queue->claimItem()) {
+      if ($item = $queue->claimItem($queue_info['lease time'])) {
         advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $end);
         continue 2;
       }
