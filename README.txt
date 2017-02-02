@@ -34,6 +34,10 @@ there are no serious memory leaks. For example:
 
   drush advancedqueue --all --timeout=900
 
+An example of daemonized queue runners in a manager process can be found here: 
+
+  https://github.com/nvahalik/advancedqueue-runner
+
 SPONSORS & MAINTAINERS
 =======================
 * Sponsored by Publicis Modem
