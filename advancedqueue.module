@@ -37,6 +37,7 @@ function advancedqueue_entity_info() {
   $entity_info['advancedqueue_item'] = array(
     'label' => t('Advanced queue item'),
     'controller class' => module_exists('entity') ? 'EntityAPIController' : 'DrupalDefaultEntityController',
+    'metadata controller class' => 'EntityDefaultMetadataController',
     'base table' => 'advancedqueue',
     'module' => 'advancedqueue',
     'entity keys' => array(
@@ -45,6 +46,29 @@ function advancedqueue_entity_info() {
     ),
   );
   return $entity_info;
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+function advancedqueue_entity_property_info_alter(&$info) {
+  $aq =& $info['advancedqueue_item'];
+  foreach ($aq['properties'] as $name => &$prop) {
+    $prop['setter callback'] = 'entity_property_verbatim_set';
+  }
+  $aq['properties']['status']['options list'] = '_advancedqueue_status_options';
+}
+
+function _advancedqueue_status_options() {
+  static $options = array(
+    ADVANCEDQUEUE_STATUS_QUEUED => 'Queued',
+    ADVANCEDQUEUE_STATUS_PROCESSING => 'Processing',
+    ADVANCEDQUEUE_STATUS_SUCCESS => 'Processed',
+    ADVANCEDQUEUE_STATUS_FAILURE => 'Failed',
+    ADVANCEDQUEUE_STATUS_FAILURE_RETRY => 'Retry',
+  );
+
+  return $options;
 }
 
 /**
