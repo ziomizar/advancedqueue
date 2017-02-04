@@ -35,6 +35,9 @@ function hook_advanced_queue_info() {
     // Queues are weighted and all items in a lighter queue are processed
     // before queues with heavier weights. Defaults to 0.
     'weight' => 10,
+    // All queue items normally fire a pre- and post-execute hook. Queues
+    // which enable (set to TRUE) this setting avoid this.
+    'skip hooks' => FALSE,
   );
   return $queue_info;
 }
@@ -49,3 +52,32 @@ function hook_advanced_queue_info_alter(&$queue_info) {
   // Change the label.
   $queue_info['example_queue']['label'] = t('Altered example queue');
 }
+
+/**
+ * React to the start of a queue item processing.
+ *
+ * @param string $queue_name
+ *   Can be used to look up $queue_info and $queue as necessary.
+ * @param stdClass|Entity $item
+ *   An advancedqueue_item entity, about to be processed.
+ */
+function hook_advancedqueue_pre_execute($queue_name, $item) {
+  if ($queue_name == 'advancedqueue_foobar') {
+    watchdog('advancedqueue', 'Hello, world!');
+  }
+}
+
+/**
+ * React to the end of a queue item processing.
+ *
+ * @param string $queue_name
+ *   Can be used to look up $queue_info and $queue as necessary.
+ * @param stdClass|Entity $item
+ *   An advancedqueue_item entity, after execution but before
+ *   status handling has occurred.
+ */
+function hook_advancedqueue_post_execute($queue_name, $item) {
+  // Make sure our items always succeed!
+  $item->status = ADVANCEDQUEUE_STATUS_SUCCESS;
+}
+
