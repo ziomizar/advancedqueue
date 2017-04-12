@@ -12,6 +12,9 @@ function advancedqueue_example_advanced_queue_info() {
   $items['example_queue'] = array(
     'label' => t('Example queue'),
     'worker callback' => 'advancedqueue_example_worker',
+    'groups' => array(
+      'example',
+    ),
     // The number of seconds to retry after.
     'retry after' => 10,
     // The maximum number of attempts after a failure.

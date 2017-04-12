@@ -24,6 +24,12 @@ function hook_advanced_queue_info() {
       'advancedqueue_example',
       'advancedqueue_example.worker',
     ),
+    // A list of groups to "tag" this queue with so that various queues
+    // can be grouped for execution by particular Drush commands.
+    'groups' => array(
+      'example',
+      'high_priority',
+    ),
     'delete when completed' => TRUE,
     // The number of seconds to retry after.
     'retry after' => 10,

@@ -18,6 +18,7 @@ function advancedqueue_drush_command() {
     'options' => array(
       'timeout' => 'The maximum execution time of the script. Be warned that this is a rough estimate as the time is only checked between two items.',
       'all' => 'Process all queues.',
+      'group' => 'Process all queues from the chosen group.',
     ),
     'aliases' => array('advancedqueue'),
   );
@@ -43,12 +44,34 @@ function drush_advancedqueue_process_queue($queue_args = NULL) {
   }
 
   $all_option = drush_get_option('all');
-  if (!$all_option && empty($queue_args)) {
-    return drush_set_error(dt('You have to specify either a set of queues or the --all parameter.'));
+  $group_option = drush_get_option('group');
+  if (!$all_option && !$group_option && empty($queue)) {
+    return drush_set_error(dt('You have to specify either a set of queues or the --all or --group parameter.'));
   }
 
   if ($all_option) {
     $queues = $queues_info;
+  }
+  elseif ($group_option) {
+    $groups = array();
+    foreach ($all_queue_info as $queue_name => $queue_info) {
+      // Each queue can define one or more groups. Thanks to the defaults, we
+      // can be sure this key is an array.
+      foreach ($queue_info['groups'] as $group) {
+        if (!isset($groups[$group])) {
+          // These sub-arrays need to be initialized or we can't append to them.
+          $groups[$group] = array();
+        }
+        $groups[$group][] = $queue_name;
+      }
+    }
+
+    if (!isset($groups[$group_option])) {
+      return drush_set_error(dt('Invalid !group queue group. Aborting.', array('!group' => $group_option)));
+    }
+
+    $queues = drupal_map_assoc($groups[$group_option]);
+    $queues = array_intersect_key($all_queue_info, $queues);
   }
   else {
     // Validate queues.

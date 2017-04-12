@@ -154,6 +154,7 @@ function advancedqueue_get_queues_info($queue_names = array()) {
         'max attempts' => 10,
         'lease time' => 30,
         'skip hooks' => FALSE,
+        'groups' => array(),
       );
     }
     drupal_alter('advanced_queue_info', $queues_info);
