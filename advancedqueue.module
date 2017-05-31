@@ -341,7 +341,7 @@ function _advancedqueue_purge_history($preserve_rows) {
     ->fetchField();
 
   // Remove all items created before the selected timestamp.
-  if ($min_row) {
+  if ($delete_before) {
     db_delete('advancedqueue')
       ->condition('created', $delete_before, '<')
       ->condition('status', $statuses, 'IN')
