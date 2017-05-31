@@ -34,7 +34,7 @@ function advancedqueue_drush_command() {
 /**
  * Command callback for drush advancedqueue-process-queue.
  *
- * @param $queue_name
+ * @param string $queue_args
  *   Arbitrary string. The name of the queue to work with.
  */
 function drush_advancedqueue_process_queue($queue_args = NULL) {
@@ -45,7 +45,7 @@ function drush_advancedqueue_process_queue($queue_args = NULL) {
 
   $all_option = drush_get_option('all');
   $group_option = drush_get_option('group');
-  if (!$all_option && !$group_option && empty($queue)) {
+  if (!$all_option && !$group_option && empty($queue_args)) {
     return drush_set_error(dt('You have to specify either a set of queues or the --all or --group parameter.'));
   }
 
@@ -54,7 +54,7 @@ function drush_advancedqueue_process_queue($queue_args = NULL) {
   }
   elseif ($group_option) {
     $groups = array();
-    foreach ($all_queue_info as $queue_name => $queue_info) {
+    foreach ($queues_info as $queue_name => $queue_info) {
       // Each queue can define one or more groups. Thanks to the defaults, we
       // can be sure this key is an array.
       foreach ($queue_info['groups'] as $group) {
@@ -71,7 +71,7 @@ function drush_advancedqueue_process_queue($queue_args = NULL) {
     }
 
     $queues = drupal_map_assoc($groups[$group_option]);
-    $queues = array_intersect_key($all_queue_info, $queues);
+    $queues = array_intersect_key($queues_info, $queues);
   }
   else {
     // Validate queues.
