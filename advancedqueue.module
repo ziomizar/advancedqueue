@@ -253,9 +253,10 @@ function advancedqueue_process_item($queue, $queue_name, $queue_info, $item, $en
     }
   }
 
-  if ($queue_info['delete when completed']) {
+  if ($queue_info['delete when completed'] && empty($item->skip_deletion)) {
     // Item was processed, so we can "delete" it. This is not removing the
-    // item from the database, but rather updates it with the status.
+    // item from the database, but rather updates it with the status. Both
+    // overall queues and individual items can skip the deletion process.
     $queue->deleteItem($item);
   }
 }
