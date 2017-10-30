@@ -30,6 +30,7 @@ function advancedqueue_settings_form($form, &$form_state) {
     '#required' => TRUE,
     '#element_validate' => array('advancedqueue_element_validate_integer_positive'),
     '#default_value' => variable_get('advancedqueue_processing_timeout_drush', 0),
+    '#field_suffix' => t('seconds'),
   );
 
   $form['advancedqueue_processing_timeout_cron'] = array(
@@ -39,6 +40,7 @@ function advancedqueue_settings_form($form, &$form_state) {
     '#required' => TRUE,
     '#element_validate' => array('advancedqueue_element_validate_integer_positive'),
     '#default_value' => variable_get('advancedqueue_processing_timeout_cron', 60),
+    '#field_suffix' => t('seconds'),
   );
 
   $form['advancedqueue_use_cron'] = array(
