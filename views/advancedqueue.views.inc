@@ -5,6 +5,7 @@
  */
 function advancedqueue_views_data() {
   $data['advancedqueue']['table']['group']  = t('Queue');
+  $data['advancedqueue']['table']['entity type'] = 'advancedqueue_item';
 
   $data['advancedqueue']['table']['base'] = array(
     'field' => 'item_id',
