@@ -34,9 +34,42 @@ there are no serious memory leaks. For example:
 
   drush advancedqueue --all --timeout=900
 
-An example of daemonized queue runners in a manager process can be found here: 
+SUPERVISORD
+===========
+1) Install supervisord
 
-  https://github.com/nvahalik/advancedqueue-runner
+For Ubuntu:
+
+  sudo apt-get install supervisor
+
+For other platforms and distributions:
+
+  See the docs http://supervisord.org/installing.html
+
+2) Configure supervisord to run the Drush worker
+
+Edit your /etc/supervisor/supervisord.conf or create a new
+/etc/supervisor/conf.d/advancedqueue.conf:
+
+  [program:advancedqueue]
+  command=/path/to/drush advancedqueue-process-queue --all --timeout=900 -r /path/to/drupal-install/ -l https://url.ofyour.site
+  autorestart=true
+
+For more configuration options see the supervisord documentation:
+
+  http://supervisord.org/configuration.html
+
+3) Start supervisord
+
+  sudo service supervisor start
+
+Check the status of your supervised advancedqueue process:
+
+  sudo supervisorctl status
+
+View supervisord logs:
+
+  tail -f /var/log/supervisor/supervisord.log
 
 SPONSORS & MAINTAINERS
 =======================
