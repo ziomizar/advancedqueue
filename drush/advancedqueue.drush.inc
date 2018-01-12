@@ -150,14 +150,15 @@ function drush_advancedqueue_get_queues() {
     drupal_alter('advanced_queue_info', $advanced_queues);
 
     $queues = array();
-    foreach($advanced_queues as $name => $queue) {
-      $queues[$name] = array(
-        'cron' => array(
-          'callback' => $queue['worker callback'],
-          'time' => $queue['time'],
-        )
-      );
-    }
+    // WTF was this crap? vvv
+    // foreach($advanced_queues as $name => $queue) {
+    //   $queues[$name] = array(
+    //     'cron' => array(
+    //       'callback' => $queue['worker callback'],
+    //       'time' => $queue['time'],
+    //     )
+    //   );
+    // }
   }
   return $queues;
 }
