@@ -59,7 +59,9 @@ class AdvancedQueue implements DrupalReliableQueueInterface {
       $fields['item_key'] = $key;
       $query = db_merge('advancedqueue')
         ->key(array('item_key' => $key))
-        ->fields($fields);
+        ->fields($fields)
+        ->condition('expire', 0)
+        ->condition('status', -1);
     }
     else {
       // No key means just insert a new item!
